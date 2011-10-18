@@ -16,16 +16,6 @@ function TicTacToe() {
 	var conversationState; 	// 
 	this.history = [];	// pop in/out current board state
 	this.strategySet = [
-<<<<<<< HEAD
-				{'name':"Win",'code':"takeWin",'tooltip':'Take a cell completing three of my stones in a row/column/diagonal','enabled':true},
-				{'name':"Block Win",'code':"takeBlockWin",'tooltip':"Take a cell of the opponent's winning position", 'enabled':false},
-				{'name':"Take Center",'code':"takeCenter",'tooltip':"Take the center cell",'enabled':false},
-				{'name':"Take Any Corner",'code':"takeAnyCorner",'tooltip':"Take any corner",'enabled':false},
-				{'name':"Take Any Side",'code':"takeAnySide",'tooltip':"Take any non-corner cells on the side.",'enabled':false},
-				{'name':"Random Move",'code':"takeRandom",'tooltip':"Take any empty cell.",'enabled':true},
-				{'name':"Take OppositeCorner",'code':"takeOppositeCorner",'tooltip':"Take a corner cell if its opposite corner is occupied by another player",'enabled':false}
-			];
-=======
 						{'name':"Win",'code':"takeWin",'tooltip':'Take a cell completing three of my stones in a row/column/diagonal','enabled':true},
 						{'name':"Block Win",'code':"takeBlockWin",'tooltip':"Take a cell of the opponent's winning position", 'enabled':false},
 						{'name':"Take Center",'code':"takeCenter",'tooltip':"Take the center cell",'enabled':false},
@@ -34,7 +24,6 @@ function TicTacToe() {
 						{'name':"Random Move",'code':"takeRandom",'tooltip':"Take any empty cell.",'enabled':true},
 						{'name':"Take OppositeCorner",'code':"takeOppositeCorner",'tooltip':"Take a corner cell if its opposite corner is occupied by another player",'enabled':false}
 					];
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
 	
 	// var script = {
 		// greeting : "Hello! I'm Robin, here to help you create own TicTacToe AI. Do you know how to play TicTacToe? <span class='console_clickable'>No, tell me what it is.</span> Let's start by playing a few rounds. ",
@@ -47,40 +36,6 @@ function TicTacToe() {
 	// };
 
 
-<<<<<<< HEAD
-	this.turn = 'p1';
-	this.started = false;    
-
-	/* INIT */
-
-	setupBoard = function(col, row) {
-		var b = new Array();
-		for (var i = 0; i < row; i++)
-			b.push(new Array(col));
-		return b;
-	}
-	
-	this.board = setupBoard(this.width, this.height);
-
-	/* BASIC FUNCTIONS */
-
-	this.getTurn = function () {return this.turn;};
-	
-	this.historyPush = function(b,loc,t){
-		this.history.push({'board':this.cloneBoard(b), 'loc':loc, 'turn':this.turn});
-	};
-
-	
-	this.flip = function(player) {
-		if (player=="p1")
-			return "p2";
-		else
-			return "p1";
-	}
-	
-	this.getBoard = function () {return this.board;};
-	
-=======
  this.turn = 'p1';
  this.started = false;    
  this.board = setupBoard(this.width, this.height);
@@ -111,7 +66,7 @@ function TicTacToe() {
 		else return "p1"
 	}
 	this.getBoard = function () {     return this.board;	  }
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
+
 	this.cloneBoard = function(b) {
 		var nb = setupBoard(this.width,this.height);
 		for(var i=0;i<this.width;i++) {
@@ -137,24 +92,7 @@ function TicTacToe() {
  		}
  	}
 	
-<<<<<<< HEAD
-	this.move = function(i, j, t) {
-		if (this.turn != t) {
-			console.log("player turn doesn't match!" + t + "!=" + this.turn);	
-	        	return;
-		} 
-		if (this.board[i][j] != null) {
-			console.log("cannot move on occupied cell [" + i+","+j+"]");	
-			return;    	
-		}
-		if (!started)
-			started = true;
-		this.board[i][j] = this.turn;    
-		this.historyPush(this.board,[i,j],t); // store current board and turn in history array        
-		this.turn = this.flip(this.turn);
-		return this.board[i][j];
-	}
-=======
+
     this.move = function(i, j, t) {
         if (this.turn != t) {
         	console.log("player turn doesn't match!" + t + "!=" + this.turn);	
@@ -170,8 +108,6 @@ function TicTacToe() {
         this.turn = this.flip(this.turn);
         return this.board[i][j];
     }
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
-
     
     this.isFull = function() {
         for (var i = 0; i < 3; i++)
@@ -181,34 +117,6 @@ function TicTacToe() {
         return true;
     }
     
-<<<<<<< HEAD
-	this.checkCol = function(x) {
-        if ((this.board[x][0] != null) && (this.board[x][0] == this.board[x][1]) && (this.board[x][0] == this.board[x][2])) 
-        	return this.board[x][0];
-        else
-			return false;
-    }
-    
-    this.checkRow = function(y) {
-        if ((this.board[0][y] != null) && (this.board[0][y] == this.board[1][y]) && (this.board[0][y] == this.board[2][y]))
-        	return this.board[0][y];
-        else
-			return false;
-    }
-    
-    this.checkDiag1 = function()  {
-        if ((this.board[0][0] != null) && (this.board[0][0] == this.board[1][1]) && (this.board[0][0] == this.board[2][2]))
-        	return this.board[0][0];
-        else
-			return false;
-    }
-    
-    this.checkDiag2 = function() {
-        if ((this.board[2][0] != null) && (this.board[1][1] == this.board[2][0]) && (this.board[0][2] == this.board[2][0])) 
-        	return this.board[2][0];
-        else
-			return false;
-=======
 	this.checkCol =function(x) {
         if (this.board[x][0] == this.board[x][1] && (this.board[x][0] == this.board[x][2]) && (this.board[x][0] != null)) 
         	return this.board[x][0];
@@ -232,7 +140,6 @@ function TicTacToe() {
         if (this.board[2][0] != null && this.board[1][1] == this.board[2][0] && this.board[0][2] == this.board[2][0]) 
         	return this.board[2][0];
         else return false;
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
     }
     
     this.checkForWinner = function() {
@@ -291,10 +198,6 @@ function TicTacToe() {
             return "player 1 to move";
         else
             return "player 2 to move";
-<<<<<<< HEAD
-=======
-        
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
     }
     
     this.getEnabledStrategy = function() {
@@ -319,20 +222,7 @@ function TicTacToe() {
     			}
     		}
     	}
-<<<<<<< HEAD
-    	return false;
-    }
-    
-    this.checkStrategyEnabled = function(code) {
-    	for (i in this.strategySet){
-			st = this.strategySet[i];
-    		if(st['code']==code)
-    			return st['enabled'];
-		}
-		alert("code (" + code + ") not found");
 		return false;
-=======
-    	return 
     }
     
     this.checkStrategyEnabled = function(code) {
@@ -341,7 +231,7 @@ function TicTacToe() {
     			return st['enabled'];
     		}
     	}
->>>>>>> 21bc531301f9804043598a75651a8b372e57eba0
+		return false;
     }
     
     this.changeOrder = function(nameList) {
