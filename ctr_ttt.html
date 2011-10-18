@@ -1,0 +1,93 @@
+<html>
+<head>
+	<meta name = "viewport" content = "width=device-width">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="js/TicTacToe.js"> </script>
+	<script type="text/javascript" src="js/Console.js"> </script>
+	<script type="text/javascript" src="js/Creation.js"> </script>	
+	<link rel="stylesheet" type="text/css" href="ttt.css"/>
+	<link rel="stylesheet" type="text/css" href="css/Creation.css"/>
+	<script type="text/javascript" src="js/Interface.js"> </script>
+</head>
+<body>	
+<div id='container' style="width:auto;">
+<!-- 	<div id="console_p1" class='panel' style="float:left;">
+		<div style="text-align:right; width:100%;">
+			<div id="icon_p1" class="icon_player"></div>
+			<div style="clear:both;"></div>
+		</div>
+		<div class='message'>
+			It's your turn. Click an empty cell to take.
+		</div>
+
+	</div> -->	 <!-- console_p1 -->
+	<div id="container_board" style="float:left; border:0px solid">	
+		<!-- <div id="title_bar" style="width:100%; text-align:center;">
+			TicTacToe
+		</div> -->
+		<div id="board" style="position:relative; margin-top:10px;">
+			<div id="bigButton" style="position:absolute; width:99%; z-index:5; height:99%; opacity:0.2; background-color:black"></div>
+			<div id="t00" class="tile"></div>
+			<div id="t10" class="tile"></div>
+			<div id="t20" class="tile"> </div>
+			<div id="t01" class="tile"> </div>
+			<div id="t11" class="tile"> </div>
+			<div id="t21" class="tile"> </div>
+			<div id="t02" class="tile"> </div>
+			<div id="t12" class="tile"> </div>
+			<div id="t22" class="tile"> </div>	
+			<!-- <div id="bigButton_computerMove" class="bigButton" onclick="computerMove();" style="">
+				<div style="display:table-cell; vertical-align:middle; text-align:center; font-size:2em;">PRESS TO CONTINUE</div>
+			</div>
+			<div id="bigButton_newGame" class="bigButton" onclick="clearBoard();">
+				<div style="display:table-cell; vertical-align:middle; text-align:center; font-size:2em;">START NEW GAME</div>
+			</div> -->		
+		</div>
+		<div id="pane_control">
+			<div>
+				<div style="float:left;"><input type="button" value="New Game" onclick="clearBoard();"></div>
+				<div id="historyControl" style="float:right;">
+					<span id="prev" onclick="history('prev');" style="cursor:pointer">
+						<
+					</span> 
+					[<span id='currentStep'>0</span>]
+					<span id="next" onclick="history('next');" style="cursor:pointer">
+						>
+					</span>
+				</div>
+				<div style="clear:both;"></div>
+				<div id="status" style="float:left; text-align:left; margin:5px;">
+					..
+				</div>
+			</div>
+		</div>
+	</div> <!-- container_board -->
+	<div id="console" class='panel' style="float:left;">
+		<div style="text-align:left; width:100%;">
+			<!-- <div id='icon_p2' class='icon_player'></div> -->
+			<!-- <div style="clear:both;"></div> -->
+		</div>
+		<div class='message'>
+		</div>
+
+<!-- 		<div id="tab_players" class="widget">
+			<ul class="rule_list">
+					
+			</ul>	 -->	
+	<!-- 		<a href="strategy.html">Edit Rules</a> -->
+		</div>
+	</div> 	<!-- console_p2 -->
+	
+	<div style="clear:both;"></div>
+</div> <!-- container -->
+
+
+	
+
+
+	
+	
+</div>
+</body>
+</html>
