@@ -1,27 +1,32 @@
+.consider{
+	background-color: #FFFFFF;
+}
+
+.ignore{
+	background-color: transparent;
+}
+
 .create_ignore{
-	background-color: #AAAAAA;
 	border: solid 2px black;
 }
 
 .create_p1{
-	background: url(icon_human_40.png) no-repeat center;
-	background-color: #FFFFFF;
+	background-image: url(icon_human_40.png);
+	background-repeat: no-repeat;
+	background-position: center;
 	border: solid 2px black;
 }
 
 .create_p2{
 	background: url(icon_computer_40.png) no-repeat center;
-	background-color: #FFFFFF;
 	border: solid 2px black;
 }
 
 .create_empty{
-	background-color: #FFFFFF;
 	border: solid 2px black;
 }
 
 .create_there{
-	background-color: #FFFFFF;
 	border: dashed 2px black;
 }
 

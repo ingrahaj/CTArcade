@@ -277,7 +277,7 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 			id : 'mR_Other',
 			style : 'margin: 7px 5px 7px 25px; font-size:1.3em; cursor:pointer;'
 		})	.text("Other")
-			.click(function() {startCreationInterface(game.cloneBoard(game.getBoard()));})
+			.click(function() {startGuidedCreationInterface(game.cloneBoard(game.getBoard()));})
 			.appendTo($(cons.target));
 	cons.appendButton("CONTINUE","$(this).hide(); computerMove()");
 	// $("#console > .message").each(function() {

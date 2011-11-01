@@ -2,20 +2,20 @@ var overlayBoard;
 var overlayConsole;
 
 var TYPE = {
-	IGNORE : {value: 0, css: "create_ignore", description:
+	IGNORE : {value: 0, css: "create_ignore", ignorecss: "ignore", description:
 		"These tiles are ignored by the rule"},
-	P1 : {value: 1, css: "create_p1", description:
+	P1 : {value: 1, css: "create_p1", ignorecss: "consider", description:
 		"This tile needs to have P1 in it to apply the rule"},
-	P2 : {value: 2, css: "create_p2", description:
+	P2 : {value: 2, css: "create_p2", ignorecss: "consider", description:
 		"This tile needs to have P2 in it to apply the rule"},
-	EMPTY : {value: 3, css: "create_empty", description:
+	EMPTY : {value: 3, css: "create_empty", ignorecss: "consider", description:
 		"This tile needs to be empty to apply the rule"},
-	SELECTED : {value: 5, css: "create_selected", description:
+	SELECTED : {value: 5, css: "create_selected", ignorecss: "consider", description:
 		"This is where P1 could go next"}
 	//THERE : {value: 4, css: "create_there"},
 };
 
-cycleThroughTypes = function(index1, index2){
+changeType = function(index1, index2){
 	if (overlayBoard[index1][index2] == TYPE.IGNORE)
 		overlayBoard[index1][index2] = TYPE.P1;
 	else if (overlayBoard[index1][index2] == TYPE.P1)
@@ -83,17 +83,17 @@ startCreationInterface = function(board) {
 								   "z-index":2,
 								   "opacity":1.0,
 								   "filter":"alpha(opacity=1.0)"});
-			$("#tilecopy"+i+j).attr("class", "tile " + board[i][j].css);
+			$("#tilecopy"+i+j).attr("class", "tile " + board[i][j].ignorecss + " " + board[i][j].css);
 			$("#tilecopy"+i+j).mousedown(
 				function(index1,index2){
 					return function(){
-						cycleThroughTypes(index1,index2);
+						changeType(index1,index2);
 						/*var cssClasses = $(this).attr("class");
 						var loc = cssClasses.search("create");
 						if(loc != -1)
 							cssClasses = cssClasses.slice(0,loc-1);
 						alert(cssClasses + " " + overlayBoard[index1][index2].css);*/
-						$(this).attr("class", "tile " + board[index1][index2].css);
+						$(this).attr("class", "tile " + board[index1][index2].ignorecss + " " + board[index1][index2].css);
 					}
 				}(i,j));
 			overlayBoard = board;
@@ -214,9 +214,10 @@ ruleIsValid = function(){
 
 parseRule = function(ruleBoard, name, desc){
 	newRule = function(board,player){
-		console.log("NEWRULE---------------")
-		console.log(board)
-		console.log(player)
+		console.log("NEWRULE---------------");
+		console.log(ruleBoard);
+		console.log(board);
+		console.log(player);
 		// not going to worry about position,rotation,symmetric invariance for now
 		// I am going to make this player-ignorant, though, i.e. switch all the
 		//   human player pictures with AI pictures
@@ -269,4 +270,162 @@ parseRule = function(ruleBoard, name, desc){
 // want a way to break down rules into textual representation
 // and building them back up to a rule function
 
+// states of the guided rule creation
+var GUIDE_STATE = {
+	SELECT : {value: 0},
+	IGNORE : {value: 1},
+	FINISHING : {value: 2}
+};
+
+var guideState = GUIDE_STATE.SELECT;
+var ignoreBoard = new Array();
+
+var lastIndex1;
+var lastIndex2;
+var lastValue = null;
+var lastIgnore = null;
+var last = null;
+
+var changeTypeBasedOnGuide = function(index1, index2, handle){
+	if (guideState == GUIDE_STATE.SELECT){
+		var curr = overlayBoard[index1][index2];
+		if ( curr == TYPE.P1 || curr == TYPE.P2)
+			return;
+		if (lastValue != null){
+			last.attr("class", "tile " + lastIgnore + " " + lastValue.css);
+			overlayBoard[lastIndex1][lastIndex2] = lastValue;
+			ignoreBoard[lastIndex1][lastIndex2] = lastIgnore;
+		}
+		last = handle;
+		lastValue = curr;
+		lastIgnore = ignoreBoard[index1][index2];
+		lastIndex1 = index1;
+		lastIndex2 = index2;
+		overlayBoard[index1][index2] = TYPE.SELECTED;
+		ignoreBoard[index1][index2] = "consider";
+	} else if (guideState == GUIDE_STATE.IGNORE)
+		flipIgnoreValue(index1, index2);
+}
+
+var flipIgnoreValue = function(index1, index2){
+	var tile = overlayBoard[index1][index2];
+	if (tile == TYPE.SELECTED)
+		return;
+	if (ignoreBoard[index1][index2] == "ignore")
+		ignoreBoard[index1][index2] = "consider";
+	else
+		ignoreBoard[index1][index2] = "ignore";
+}
+
+var switchState = function(){
+	switch(guideState){ 
+		case GUIDE_STATE.SELECT:
+			var message = ruleIsValid();
+			if (message != null){
+				alert(message);
+				return;
+			}
+			guideState = GUIDE_STATE.IGNORE;
+			overlayConsole.clear();
+			overlayConsole.appendInstruction("Now, which spaces made you go where you did?");
+			overlayConsole.appendHTML("<br/>");
+			overlayConsole.appendButton("CONTINUE","switchState()");
+			overlayConsole.appendHTML("<br/>");
+			overlayConsole.appendButton("QUIT","endCreationInterface()");
+			break;
+		case GUIDE_STATE.IGNORE:
+			guideState = GUIDE_STATE.FINISHING;
+			for (var i=0; i<overlayBoard.length; i++)
+				for (var j=0; j<overlayBoard[0].length; j++)
+					if (ignoreBoard[i][j] == "ignore")
+						overlayBoard[i][j] = TYPE.IGNORE;
+			checkRule();
+			break;
+		case GUIDE_STATE.FINISHING:
+			alert("This should be impossible to reach - guide_state.finishing");
+			break;
+	}
+}
+
 // also want a way to create rules within a guide
+startGuidedCreationInterface = function(board) {
+	$("<div></div>",{
+		id : 'overlay',
+		style : 'width: 100%;\
+				height: 100%;\
+				z-index: 1;\
+				background-color: #444444;\
+				position: absolute;\
+				left: 0;\
+				top: 0;\
+				opacity: 0.0;\
+				filter: alpha(opacity=0.5);'
+	}).appendTo($("html"));
+	
+	// clone, create an overlaid console
+	var consoleHandle = $("#console");
+	consoleHandle.clone().attr("id","overlayConsole").appendTo("html");
+	$("#overlayConsole").css({"position":"absolute",
+							 "left":consoleHandle.offset()["left"]-parseInt(consoleHandle.css("margin-left")),
+							 "top":consoleHandle.offset()["top"]-parseInt(consoleHandle.css("margin-top")),
+							 "width":consoleHandle.width(),
+							 "height":consoleHandle.height(),
+							 "z-index":2,
+							 "opacity":1.0,
+							 "filter":"alpha(opacity=1.0)"});
+	overlayConsole = new Console();
+	overlayConsole.init("#overlayConsole > .message");
+	overlayConsole.clear();
+	
+	// also need to clone, create the web representation of the game board
+	var tileHandle;
+	for (var i=0; i<board.length; i++){
+		ignoreBoard[i] = new Array();
+		for (var j=0; j<board[i].length; j++){
+			//initialize the board type
+			if (board[i][j] == "p1")
+				board[i][j] = TYPE.P1;
+			else if (board[i][j] == "p2")
+				board[i][j] = TYPE.P2;
+			else
+				board[i][j] = TYPE.EMPTY;
+			ignoreBoard[i][j] = "ignore";
+			
+			// set up the rest of the attributes of the new tile
+			tileHandle = $('#t'+i+j);
+			tileHandle.clone().attr("id","tilecopy"+i+j).appendTo("html");
+			$("#tilecopy"+i+j).attr("style","");
+			$("#tilecopy"+i+j).css({"position":"absolute",
+								   "left":tileHandle.offset()["left"]-parseInt(tileHandle.css("margin-left")),
+								   "top":tileHandle.offset()["top"]-parseInt(tileHandle.css("margin-top")),
+								   "width":tileHandle.width(),
+								   "height":tileHandle.height(),
+								   "z-index":2,
+								   "opacity":1.0,
+								   "filter":"alpha(opacity=1.0)"});
+			$("#tilecopy"+i+j).attr("class", "tile " + ignoreBoard[i][j] + " " + board[i][j].css);
+			$("#tilecopy"+i+j).mousedown(
+				function(index1,index2){
+					return function(){
+						changeTypeBasedOnGuide(index1,index2,$(this));
+						$(this).attr("class", "tile " + ignoreBoard[index1][index2] + " " + board[index1][index2].css);
+					}
+				}(i,j));
+			overlayBoard = board;
+		}
+	}
+	
+	// add a continue and quit button to the console
+	overlayConsole.appendInstruction("Click where you think I should have gone.");
+	overlayConsole.appendHTML("<br/>");
+	overlayConsole.appendHTML("<br/>");
+	overlayConsole.appendButton("ALL DONE!","switchState()");
+	overlayConsole.appendHTML("<br/>");
+	overlayConsole.appendButton("QUIT","endCreationInterface()");
+	
+	// set up the initial guide state
+	guideState = GUIDE_STATE.SELECT;
+	
+	// fancy animation stuff
+	$("#overlay").animate({"opacity":"0.75"}, 'fast');
+}
