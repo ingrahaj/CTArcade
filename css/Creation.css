@@ -18,7 +18,9 @@
 }
 
 .create_p2{
-	background: url(icon_computer_40.png) no-repeat center;
+	background-image: url(icon_computer_40.png);
+	background-repeat: no-repeat;
+	background-position: center;
 	border: solid 2px black;
 }
 

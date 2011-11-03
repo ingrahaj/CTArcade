@@ -182,10 +182,7 @@ checkDesc = function(name){
 	var desc = $("#ruleDesc").val();
 	if (desc == "My rule..." || desc == "")
 		desc = "No description";
-	console.log(name+": "+desc);
-	console.log("starting parseRule")
 	parseRule(overlayBoard, name, desc);
-	console.log("starting endCreationInterface")
 	endCreationInterface();
 }
 
@@ -214,10 +211,16 @@ ruleIsValid = function(){
 
 parseRule = function(ruleBoard, name, desc){
 	newRule = function(board,player){
-		console.log("NEWRULE---------------");
-		console.log(ruleBoard);
-		console.log(board);
-		console.log(player);
+		if (guideState == GUIDE_STATE.FINISHING){
+			for (var i=0; i<ruleBoard.length; i++){
+				for (var j=0; j<ruleBoard[0].length; j++){
+					if(ruleBoard[i][j] == player)
+						ruleBoard[i][j] = game.flip(player);
+					else if(ruleBoard[i][j] == game.flip(player))
+						ruleBoard[i][j] = player;
+				}
+			}
+		}
 		// not going to worry about position,rotation,symmetric invariance for now
 		// I am going to make this player-ignorant, though, i.e. switch all the
 		//   human player pictures with AI pictures
@@ -280,18 +283,18 @@ var GUIDE_STATE = {
 var guideState = GUIDE_STATE.SELECT;
 var ignoreBoard = new Array();
 
-var lastIndex1;
+/*var lastIndex1;
 var lastIndex2;
 var lastValue = null;
 var lastIgnore = null;
-var last = null;
+var last = null;*/
 
 var changeTypeBasedOnGuide = function(index1, index2, handle){
 	if (guideState == GUIDE_STATE.SELECT){
 		var curr = overlayBoard[index1][index2];
 		if ( curr == TYPE.P1 || curr == TYPE.P2)
 			return;
-		if (lastValue != null){
+		/*if (lastValue != null){
 			last.attr("class", "tile " + lastIgnore + " " + lastValue.css);
 			overlayBoard[lastIndex1][lastIndex2] = lastValue;
 			ignoreBoard[lastIndex1][lastIndex2] = lastIgnore;
@@ -300,9 +303,10 @@ var changeTypeBasedOnGuide = function(index1, index2, handle){
 		lastValue = curr;
 		lastIgnore = ignoreBoard[index1][index2];
 		lastIndex1 = index1;
-		lastIndex2 = index2;
+		lastIndex2 = index2;*/
 		overlayBoard[index1][index2] = TYPE.SELECTED;
 		ignoreBoard[index1][index2] = "consider";
+		switchState();
 	} else if (guideState == GUIDE_STATE.IGNORE)
 		flipIgnoreValue(index1, index2);
 }
@@ -418,8 +422,6 @@ startGuidedCreationInterface = function(board) {
 	// add a continue and quit button to the console
 	overlayConsole.appendInstruction("Click where you think I should have gone.");
 	overlayConsole.appendHTML("<br/>");
-	overlayConsole.appendHTML("<br/>");
-	overlayConsole.appendButton("ALL DONE!","switchState()");
 	overlayConsole.appendHTML("<br/>");
 	overlayConsole.appendButton("QUIT","endCreationInterface()");
 	

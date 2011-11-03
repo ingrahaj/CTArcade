@@ -131,9 +131,14 @@ function computerMove() {
 }
 
 function history(direction) {
+	// increment currentStep
 	var currentStep = parseInt($("#currentStep").text());
-	if (direction=='next') currentStep += 1;
-	else currentStep -= 1;
+	if (direction=='next')
+		currentStep += 1;
+	else
+		currentStep -= 1;
+		
+	// keep currentStep within reasonable bounds
 	if (currentStep>=game.history.length-1) {
 		historyMode('off');
 		tempBoard = game.history[game.history.length-1];
@@ -154,15 +159,22 @@ function history(direction) {
 		$("#currentStep").text(currentStep);
 		// $(".icon_player").css('border','0px');
 		cons.clear();
-		cons.appendMessage('We are in history mode. You can trace current game back and forth.<br>');
+		cons.appendMessage('We are in history mode. You can trace the current game back and forth.');
+		cons.appendHTML('<br/>');
 		if (tempBoard['turn']=='p2') {
+			cons.appendInstruction('It was your turn. Do you want to start again from this point?');
+			cons.appendHTML('<br/>');
+			cons.appendButton('Resume Game From Here','resumeGame('+currentStep+');');
 			// $("#icon_p1").css('border','2px solid #aaa');
-			cons.appendHTML("<div>It was your turn. Do you want to start again from this point? <div class='button_round' onclick='resumeGame("+currentStep+");' style='float:right;'>Resume Game Here</div></div>");
+			// cons.appendHTML("<div>It was your turn. Do you want to start again from this point? <div class='button_round' onclick='resumeGame("+currentStep+");' style='float:right;'>Resume Game Here</div></div>");
 			// $("#console_p2 > .message").empty();
 		} else {
 			// $("#icon_p2").css('border','2px solid #aaa');
 			// $("#console > .message").empty();
-			cons.appendHTML("<div>It was my turn. You can teach me what I could have done at this point. <br>To do that, click an empty cell and tell me why you think it is important.</div>");
+			cons.appendInstruction("It was my turn. You can teach me what I could have done at this point.");
+			cons.appendHTML("<br/>");
+			cons.appendInstruction("To do that, click an empty cell and tell me why you think it is important.");
+			cons.appendHTML("<br/>");
 			$(".tile").click( function() {
 				teachAI(tempBoard['board'],tempBoard['turn'],$(this).attr('id'));
 			});
@@ -174,13 +186,26 @@ function history(direction) {
 function teachAI(board,turn,loc) {
 	var x = loc[1];
 	var y = loc[2];
-	// console.log(board, turn, [x,y]);
 	flippedTurn = (turn == 'p1') ? 'p2' : 'p1';
 	var matchingRules = game.analyzeMove(board,flippedTurn,[x,y]);
-	// console.log(matchingRules);
-	cons.appendHTML("<div>Which rule below does match with your choice?</div>");
+	cons.appendInstruction("Which rule below matches your choice?");
 	html = "<div class='teach'>";
 	$(matchingRules).each( function(i,rule) {
+		alreadyKnown = game.checkStrategyEnabled(rule['code']);
+		$('<div></div>',{
+			id : 'mR_'+rule['code'],
+			style : 'margin: 7px 5px 7px 25px; font-size:1.3em; cursor:pointer;'
+		})	.text(rule['name'])
+			.click(function() { enableStrategy(rule['code']);})
+			.appendTo($(cons.target));
+	});
+	$('<div></div>',{
+			id : 'mR_Other',
+			style : 'margin: 7px 5px 7px 25px; font-size:1.3em; cursor:pointer;'
+		})	.text("Other")
+			.click(function() {startGuidedCreationInterface(game.cloneBoard(board));})
+			.appendTo($(cons.target));
+	/*$(matchingRules).each( function(i,rule) {
 		// $('<div></div>',{
 			// id : 'mR_'+rule['code'],
 			// style : 'margin-left:20px;height:2em;'
@@ -189,8 +214,10 @@ function teachAI(board,turn,loc) {
 			// .appendTo('#console > .message');
 		html = "<div style='margin-left:20px;'>"+rule['name']+"</div>"			
 	});
+	html = html+"<div style='margin-left:20px;'>Other</div>";
 	html = html+"</div>";
-	cons.appendHTML(html);
+	
+	cons.appendHTML(html);*/
 }
 
 function resumeGame(currentStep) {
@@ -207,7 +234,7 @@ function historyMode(flag) {
 		$('.tile').css('background-color','#ddd');
 		$('#status').text('History mode')
 						.css('background-color','#0055ff');
-	} 
+	}
 	if(flag=='off') {
 		$(".tile").unbind();
 		$(".tile").click( function() {
@@ -253,7 +280,6 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 	cons.clear();
 	cons.appendMessage("Is your last move based on one of these rules?")
 	
-	//alert('showMatching');
 	$(matchingRules).each( function(i,rule) {
 		alreadyKnown = game.checkStrategyEnabled(rule['code']);
 		$('<div></div>',{
@@ -277,7 +303,7 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 			id : 'mR_Other',
 			style : 'margin: 7px 5px 7px 25px; font-size:1.3em; cursor:pointer;'
 		})	.text("Other")
-			.click(function() {startGuidedCreationInterface(game.cloneBoard(game.getBoard()));})
+			.click(function() {startCreationInterface(game.cloneBoard(game.getBoard()));})
 			.appendTo($(cons.target));
 	cons.appendButton("CONTINUE","$(this).hide(); computerMove()");
 	// $("#console > .message").each(function() {
@@ -309,6 +335,7 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 	// $("#console_p1 > .message").append(htmlResult);
 	// $("#bigButton_computerMove").show();
 }
+
 function clearBoard() {
 	needReset=false;
 	$("#status").css('color','black');
@@ -332,7 +359,7 @@ function clearBoard() {
 }	
 
 function callUserMove(dd) {
-	if (needReset) {	// when baord is full or game already ended, needReset is true
+	if (needReset) {	// when board is full or game already ended, needReset is true
 		return;
 	}
 	// console.log('clciked');
@@ -369,5 +396,4 @@ $(document).ready(function () {
 	$(".tile").click( function() {
 		callUserMove($(this).attr('id'));
 	});
-// alert("dd");
 });
