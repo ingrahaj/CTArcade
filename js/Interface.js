@@ -1,6 +1,7 @@
 var game=null;
 var cons=null;	// console object
-var needReset = false;   
+var needReset = false;
+var alreadyPlayed = false;
 // var currentTurn;
 // var p1 = 'X';   // human player
 // var p2 = 'O'; 	// computer AI 
@@ -30,14 +31,17 @@ function checkWinner() {
 	if (winner) {
 		$("#status").text(winner + " wins!");
 		$("#status").css('background-color', 'yellow');
+		cons.appendHTML("<br/>")
 		if(winner=='p1') cons.appendMessage('You win!');
 		else cons.appendMessage('I win!');
+		cons.appendMessage('Let\'s play again! Just click the new game button.');
 		// $("#bigButton_newGame").show();
 		needReset = true;
 	} else {
 		$("#status").text(game.turn + " to play");
 		// cons.appendMessage(game.turn + " to play");
 	}
+	return winner;
 }	
 
 // it uses AI's current strategy set 
@@ -52,14 +56,14 @@ function computerMove() {
 		return;
 	}
 	
+	cons.clear();
+	
 	$("#sortable").each( function() {
 		$(this).attr('id','');	
 	});
 	
-	
 	var html = "<div>For my last move I tried all my strategies,</div><ul id='sortable'>";
 	var nextMove = game.findBestStrategy(game.board,game.turn,game.strategySet); // returns {'message':[[title]],'loc':[[x,y],...]};
-	// console.log(nextMove);
 	// convert used strategies in HTML
 	enabledStrategy = game.getEnabledStrategy();  // get strategies AI learned so far
 	for(i in enabledStrategy) {
@@ -109,9 +113,6 @@ function computerMove() {
 		cons.appendHTML(html);
 	} else {
 		$("#rule").text(nextMove.message);
-		//console.log(nextMove.locList.length);
-		html = "<div style='line-height:1.2em;margin-top:10px;'>Your turn now. Click an empty cell to continue.</div>"
-		cons.appendHTML(html);
 		// $("#console > .message").animate({scrollTop: $("#console > .message").scrollHeight});
 		// $("#console > .message").each(function() {
 			// var scrollHeight =Math.max(this.scrollHeight, this.clientHeight);
@@ -125,8 +126,12 @@ function computerMove() {
 		$("#currentStep").text(game.history.length-1);
 		updateBoard(game.board);
 		// $('#bigButton').hide();
-		checkWinner(); 
+		if (!checkWinner()){
+			html = "<div style='line-height:1.2em;margin-top:10px;'>Your turn now. Click an empty cell to continue.</div>"
+			cons.appendHTML(html);
+		}
 		// var t = setTimeout("turnPlayer('p1')",700);
+		alreadyPlayed = false;
 	}
 }
 
@@ -221,6 +226,8 @@ function teachAI(board,turn,loc) {
 }
 
 function resumeGame(currentStep) {
+	alreadyPlayed = false;
+	needReset = false;
 	game.resumeAt(currentStep);
 	historyMode('off');
 	$(".tile").click( function() {
@@ -286,7 +293,7 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 			id : 'mR_'+rule['code'],
 			style : 'margin: 7px 5px 7px 25px; font-size:1.3em; cursor:pointer;'
 		})	.text(rule['name'])
-			.click(function() { enableStrategy(rule['code']);})
+			.click(function() {enableStrategy(rule['code']); computerMove();})
 			.appendTo($(cons.target));
 		// if (alreadyKnown) {
 			// $("#mR_"+rule['code']).css({
@@ -305,7 +312,8 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 		})	.text("Other")
 			.click(function() {startCreationInterface(game.cloneBoard(game.getBoard()));})
 			.appendTo($(cons.target));
-	cons.appendButton("CONTINUE","$(this).hide(); computerMove()");
+	if (!game.checkForWinner())
+		cons.appendButton("CONTINUE","$(this).hide(); computerMove()");
 	// $("#console > .message").each(function() {
 		// var scrollHeight =Math.max(this.scrollHeight, this.clientHeight);
 		// var offset = scrollHeight - this.clientHeight;
@@ -338,6 +346,7 @@ function showMatchingRules(matchingRules)  {  // matchingRules : {name:text, cod
 
 function clearBoard() {
 	needReset=false;
+	alreadyPlayed = false;
 	$("#status").css('color','black');
 	$("#bigButton").hide();
 	historyMode('off');
@@ -359,10 +368,9 @@ function clearBoard() {
 }	
 
 function callUserMove(dd) {
-	if (needReset) {	// when board is full or game already ended, needReset is true
+	if (needReset || alreadyPlayed) {	// when board is full or game already ended, needReset is true
 		return;
 	}
-	// console.log('clciked');
 	var currentTurn = game.turn;
 	var x = dd[1];
 	var y = dd[2];
@@ -370,13 +378,15 @@ function callUserMove(dd) {
 }
 
 function userMove(x,y) {
-	// currentStep += 1;
-	showMatchingRules(game.analyzeMove(game.board,game.turn,[x,y]));
+	//currentStep += 1;
+	cons.clear();
 	var val = game.move(x, y, currentTurn);  // update game.board, game.turn and game.history
 	// $(this).text(val);   // change clicked cell's text
 	$("#currentStep").text(game.history.length-1);
 	updateBoard(game.board);	// update game.board on #txy.text
+	showMatchingRules(game.analyzeMove(game.board,game.turn,[x,y]));
 	checkWinner();	// check winning condition. if yes, show the winner, otherwise show next one to play
+	alreadyPlayed = true;
 	// wait until user confirms which rule he used.
 	// if (currentTurn != game.turn && !needReset) {
 		// // $("#console > .message").empty().text("AI is thinking...");

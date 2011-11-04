@@ -11,7 +11,7 @@ var TYPE = {
 	EMPTY : {value: 3, css: "create_empty", ignorecss: "consider", description:
 		"This tile needs to be empty to apply the rule"},
 	SELECTED : {value: 5, css: "create_selected", ignorecss: "consider", description:
-		"This is where P1 could go next"}
+		"This is where the current player could go next"}
 	//THERE : {value: 4, css: "create_there"},
 };
 
@@ -187,6 +187,7 @@ checkDesc = function(name){
 }
 
 endCreationInterface = function(){
+	$("#overlay").fadeOut();
 	$("#overlay").remove();
 	$("#overlayConsole").remove();
 	for (var i=0; i<overlayBoard.length; i++)
@@ -210,17 +211,17 @@ ruleIsValid = function(){
 }
 
 parseRule = function(ruleBoard, name, desc){
-	newRule = function(board,player){
-		if (guideState == GUIDE_STATE.FINISHING){
-			for (var i=0; i<ruleBoard.length; i++){
-				for (var j=0; j<ruleBoard[0].length; j++){
-					if(ruleBoard[i][j] == player)
-						ruleBoard[i][j] = game.flip(player);
-					else if(ruleBoard[i][j] == game.flip(player))
-						ruleBoard[i][j] = player;
-				}
+	if (guideState == GUIDE_STATE.FINISHING){
+		for (var i=0; i<ruleBoard.length; i++){
+			for (var j=0; j<ruleBoard[0].length; j++){
+				if(ruleBoard[i][j] == TYPE.P1)
+					ruleBoard[i][j] = TYPE.P2;
+				else if(ruleBoard[i][j] == TYPE.P2)
+					ruleBoard[i][j] = TYPE.P1;
 			}
 		}
+	}
+	newRule = function(board,player){
 		// not going to worry about position,rotation,symmetric invariance for now
 		// I am going to make this player-ignorant, though, i.e. switch all the
 		//   human player pictures with AI pictures
@@ -331,7 +332,7 @@ var switchState = function(){
 			}
 			guideState = GUIDE_STATE.IGNORE;
 			overlayConsole.clear();
-			overlayConsole.appendInstruction("Now, which spaces made you go where you did?");
+			overlayConsole.appendInstruction("Now, which spaces made you choose that space?");
 			overlayConsole.appendHTML("<br/>");
 			overlayConsole.appendButton("CONTINUE","switchState()");
 			overlayConsole.appendHTML("<br/>");

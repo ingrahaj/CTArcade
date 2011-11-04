@@ -88,7 +88,7 @@ function TicTacToe() {
  			if(nB['turn']=='p1') this.turn = 'p2';
  			else this.turn = 'p1';
  			// this.turn = nB['turn'];
- 			this.history = this.history.slice(0,step);
+ 			this.history = this.history.slice(0,step+1);
  		}
  	}
 	
@@ -164,16 +164,18 @@ function TicTacToe() {
     
 	this.analyzeMove = function(brd,player,userMoveLoc) {
 		// check which strategies are matching with given brd,turn,loc
-		matchingStrategy = [];
+		var matchingStrategy = [];
 		for (key in this.strategySet) {
-			st = this.strategySet[key];
+			var st = this.strategySet[key];
+			if (st.enabled)
+				continue;
 			// console.log(st);
 			//console("ana" + brd,player);
-			result = this[st.code](brd,player);
+			var result = this[st.code](brd,player);
 			if (true /*result['success']==true*/) {
 				for(i in result.loc) {
-					l = result.loc[i];
-					if(userMoveLoc[0]==l[0] && userMoveLoc[1]==l[1]) {
+					var loc = result.loc[i];
+					if(userMoveLoc[0]==loc[0] && userMoveLoc[1]==loc[1]) {
 						matchingStrategy.push({'name':st.name,'code':st.code});
 					}
 					
@@ -226,7 +228,7 @@ function TicTacToe() {
     }
     
     this.checkStrategyEnabled = function(code) {
-    	for (i in this.strategySet) {
+    	for (st in this.strategySet) {
     		if(st['code']==code) {
     			return st['enabled'];
     		}
