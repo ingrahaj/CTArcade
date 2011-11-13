@@ -96,11 +96,11 @@ function TicTacToe() {
     this.move = function(i, j, t) {
         if (this.turn != t) {
         	console.log("player turn doesn't match!" + t + "!=" + this.turn);	
-        	return;
+        	return false;
         } 
         if (this.board[i][j] != null) {
         	console.log("cannot move on occupied cell [" + i+","+j+"]");	
-        	return;    	
+        	return false;    	
         }
        	if (!started)   started = true;
         this.board[i][j] = this.turn;    

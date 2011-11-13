@@ -380,13 +380,14 @@ function callUserMove(dd) {
 function userMove(x,y) {
 	//currentStep += 1;
 	cons.clear();
-	var val = game.move(x, y, currentTurn);  // update game.board, game.turn and game.history
-	// $(this).text(val);   // change clicked cell's text
-	$("#currentStep").text(game.history.length-1);
+	var matchingRules = game.analyzeMove(game.board,game.turn,[x,y])
+	if(!game.move(x, y, currentTurn))  // update game.board, game.turn and game.history
+		return;
 	updateBoard(game.board);	// update game.board on #txy.text
-	showMatchingRules(game.analyzeMove(game.board,game.turn,[x,y]));
-	checkWinner();	// check winning condition. if yes, show the winner, otherwise show next one to play
+	$("#currentStep").text(game.history.length-1);
 	alreadyPlayed = true;
+	if(!checkWinner())	// check winning condition. if yes, show the winner, otherwise show next one to play
+		showMatchingRules(matchingRules);
 	// wait until user confirms which rule he used.
 	// if (currentTurn != game.turn && !needReset) {
 		// // $("#console > .message").empty().text("AI is thinking...");

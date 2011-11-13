@@ -168,13 +168,15 @@ checkRule = function(){
 
 checkName = function(){
 	var name = $("#ruleName").val();
-	if (name != null && name != ""){
+	if (name == null || name == "") {
+		alert("Please write a name for your new rule!");
+	} else if (eval("game."+name+"!=null")){
+		alert("This name has already been taken - can you choose another?");
+	} else {
 		overlayConsole.clear();
 		overlayConsole.appendInstruction("Can you describe what your new rule does?");
 		overlayConsole.appendHTML("<textarea id='ruleDesc'>My rule...</textarea>");
 		overlayConsole.appendButton("CONTINUE","checkDesc(\""+name+"\")");
-	} else {
-		alert("Please write a name for your new rule!");
 	}
 }
 
@@ -221,7 +223,88 @@ parseRule = function(ruleBoard, name, desc){
 			}
 		}
 	}
-	newRule = function(board,player){
+	
+	var min = function(n,m){
+		return (n<m ? n : m);
+	}
+	
+	var max = function(n,m){
+		return (n>m ? n : m);
+	}
+	
+	// convert the rule to a relative format
+	var hMin = ruleBoard.length;
+	var hMax = 0;
+	var vMin = ruleBoard.length;
+	var vMax = 0;
+	for (var i=0; i<ruleBoard.length; i++){
+		for (var j=0; j<ruleBoard[0].length; j++){
+			if (ruleBoard[i][j] != TYPE.IGNORE){
+				hMin = min(hMin,i);
+				hMax = max(hMax,i);
+				vMin = min(vMin,j);
+				vMax = max(vMax,j);
+			}
+		}
+	}
+	var width = hMax-hMin+1;
+	var height = vMax-vMin+1;
+	
+	// essentially, we're shrinking a given rule to the smallest rectangular
+	// array that can hold it
+	var newRuleBoard = new Array();
+	for (var i=0; i<width; i++)
+		newRuleBoard.push(new Array(height));
+	for (var i=hMin; i<=hMax; i++){
+		for (var j=vMin; j<=vMax; j++){
+			newRuleBoard[i-hMin][j-vMin] = ruleBoard[i][j];
+		}
+	}
+	
+	newRelativeRule = function(board, player){
+		var result = new Object();
+		result['success']=true;
+		result['loc'] = [];
+		for (var i=0; i<=(board.length-width); i++){
+			for (var j=0; j<=(board[0].length-height); j++){
+				for (var k=i; k<(width+i); k++){
+					for (var l=j; l<(height+j); l++){
+						switch(newRuleBoard[k-i][l-j]){
+							case (TYPE.P1):
+								if (board[k][l] != player)
+									result['success'] = false;
+								break;
+							case (TYPE.P2):
+								console.log("typep2");
+								if (board[k][l] != game.flip(player))
+									result['success'] = false;
+								break;
+							case (TYPE.EMPTY):
+								console.log("typeempty");
+								if (board[k][l] != null)
+									result['success'] = false;
+								break;
+							case (TYPE.SELECTED):
+								console.log("typeselected");
+								if (board[k][l] == null)
+									result['loc'].push([k,l]);
+								break;
+							default:
+								console.log(newRuleBoard[k-i][l-j]);
+						}
+					}
+				}
+				if (!result['success'])
+					result['loc'].pop();
+				result['success'] = true;
+			}
+		}
+		if (result['loc'].length == 0)
+			result['success'] = false;
+		return result;
+	}
+	
+	/*newRule = function(board,player){
 		// not going to worry about position,rotation,symmetric invariance for now
 		// I am going to make this player-ignorant, though, i.e. switch all the
 		//   human player pictures with AI pictures
@@ -253,10 +336,8 @@ parseRule = function(ruleBoard, name, desc){
 				}
 			}
 		}
-		console.log(result);
 		return result;
-	}
-	// how to represent different created rules? array?
+	}*/
 	
 	// name,code,tooltip,enabled:
 	//   name should be set by the user
@@ -264,11 +345,12 @@ parseRule = function(ruleBoard, name, desc){
 	//   tooltip should be set by the user, if used
 	//   enabled could be toggled depending on the context - should the AI learn it right away,
 	//                                                       or learn through context when it next pops up
-	game.strategySet.push({'name':name,'code':"newRule",'tooltip':desc,'enabled':true});
-	game.newRule = newRule;
-	console.log('new strategy pushed');	
 	
-	// for hooking in to the general game, need a generic addRule() function that could maybe do this
+	game.strategySet.push({'name':name,'code':name,'tooltip':desc,'enabled':true});
+	eval("game."+name+" = newRelativeRule");
+	console.log('new strategy '+name+' pushed');	
+	
+	// a generic addRule() function would definitely be preferred to this method
 }
 
 // want a way to break down rules into textual representation
