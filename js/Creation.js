@@ -213,6 +213,34 @@ ruleIsValid = function(){
 }
 
 parseRule = function(ruleBoard, name, desc){
+	// local helper functions //
+	var min = function(n,m){
+		return (n<m ? n : m);
+	}
+	
+	var max = function(n,m){
+		return (n>m ? n : m);
+	}
+	
+	var flip = function(board,horizontally,vertically){
+		var flippedRuleBoard = new Array();
+		for(var i=0; i<board.length; i++)
+			flippedRuleBoard.push(new Array(board[0].length));
+		for(var i=0; i<board.length; i++){
+			for(var j=0; j<board[0].length; j++){
+				var xIndex = i;
+				var yIndex = j;
+				if (vertically)
+					xIndex = board.length-i-1;
+				if (horizontally)
+					yIndex = board[0].length-j-1;
+				flippedRuleBoard[xIndex][yIndex] = board[i][j];
+			}
+		}
+		return flippedRuleBoard;
+	}
+	
+	// start of actual function
 	if (guideState == GUIDE_STATE.FINISHING){
 		for (var i=0; i<ruleBoard.length; i++){
 			for (var j=0; j<ruleBoard[0].length; j++){
@@ -222,14 +250,6 @@ parseRule = function(ruleBoard, name, desc){
 					ruleBoard[i][j] = TYPE.P1;
 			}
 		}
-	}
-	
-	var min = function(n,m){
-		return (n<m ? n : m);
-	}
-	
-	var max = function(n,m){
-		return (n>m ? n : m);
 	}
 	
 	// convert the rule to a relative format
@@ -261,43 +281,62 @@ parseRule = function(ruleBoard, name, desc){
 		}
 	}
 	
+	// create three new boards:
+	// - flip horizontally
+	// - flip vertically
+	// - flip both
+	var newRuleBoards = new Array();
+	newRuleBoards.push(newRuleBoard);
+	newRuleBoards.push(flip(newRuleBoard,true,false))
+	newRuleBoards.push(flip(newRuleBoard,false,true))
+	newRuleBoards.push(flip(newRuleBoard,true,true))
+	
+	// this is the check function - it goes through all ruleboards just created
+	//   and compares them to the actual board
 	newRelativeRule = function(board, player){
 		var result = new Object();
+		var pushFlag = false;
 		result['success']=true;
 		result['loc'] = [];
-		for (var i=0; i<=(board.length-width); i++){
-			for (var j=0; j<=(board[0].length-height); j++){
-				for (var k=i; k<(width+i); k++){
-					for (var l=j; l<(height+j); l++){
-						switch(newRuleBoard[k-i][l-j]){
-							case (TYPE.P1):
-								if (board[k][l] != player)
-									result['success'] = false;
-								break;
-							case (TYPE.P2):
-								console.log("typep2");
-								if (board[k][l] != game.flip(player))
-									result['success'] = false;
-								break;
-							case (TYPE.EMPTY):
-								console.log("typeempty");
-								if (board[k][l] != null)
-									result['success'] = false;
-								break;
-							case (TYPE.SELECTED):
-								console.log("typeselected");
-								if (board[k][l] == null)
-									result['loc'].push([k,l]);
-								break;
-							default:
-								console.log(newRuleBoard[k-i][l-j]);
+		for (var h=0; h<newRuleBoards.length; h++){
+			for (var i=0; i<=(board.length-width); i++){
+				for (var j=0; j<=(board[0].length-height); j++){
+					for (var k=i; k<(width+i); k++){
+						for (var l=j; l<(height+j); l++){
+							console.log(newRuleBoards[h]);
+							switch(newRuleBoards[h][k-i][l-j]){
+								case (TYPE.P1):
+									if (board[k][l] != player)
+										result['success'] = false;
+									break;
+								case (TYPE.P2):
+									if (board[k][l] != game.flip(player))
+										result['success'] = false;
+									break;
+								case (TYPE.EMPTY):
+									if (board[k][l] != null)
+										result['success'] = false;
+									break;
+								case (TYPE.SELECTED):
+									if (board[k][l] == null){
+										result['loc'].push([k,l]);
+										pushFlag = true;
+									}
+									break;
+								default:
+									alert("something went wrong");
+							}
 						}
 					}
+					if (!result['success']){
+						if (pushFlag)
+							result['loc'].pop();
+					}
+					pushFlag = false;
+					result['success'] = true;
 				}
-				if (!result['success'])
-					result['loc'].pop();
-				result['success'] = true;
 			}
+			console.log(result['loc']+"")
 		}
 		if (result['loc'].length == 0)
 			result['success'] = false;
