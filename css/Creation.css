@@ -6,6 +6,14 @@
 	background-color: transparent;
 }
 
+.consider_demonstrate{
+	background-color: #FFFFFF;
+}
+
+.ignore_demonstrate{
+	background-color: #737373;
+}
+
 .create_ignore{
 	border: solid 2px black;
 }

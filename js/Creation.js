@@ -105,7 +105,7 @@ startCreationInterface = function(board) {
 	for (type in TYPE){
 		html = html +
 			"<div id='container_"+type+"' style='float:left; margin: 2px;'>\
-			   <div class='"+TYPE[type].css+"' \
+			   <div class='"+TYPE[type].ignorecss+"_demonstrate "+TYPE[type].css+"' \
 					style='width: 50px; height: 50px; float: left;'>\
 				</div>\
 				<div id='description_"+type+"' class='instruction' \
@@ -160,32 +160,41 @@ checkRule = function(){
 		overlayConsole.clear();
 		overlayConsole.appendInstruction("What do you want to call your new rule?");
 		overlayConsole.appendHTML("<input id='ruleName' type='text' value='newRule'/>");
-		overlayConsole.appendButton("CONTINUE","checkName()");
+		overlayConsole.appendHTML("<br/><br/>");
+		overlayConsole.appendInstruction("Can you describe what your new rule does?");
+		overlayConsole.appendHTML("<textarea id='ruleDesc'>My rule...</textarea>");
+		overlayConsole.appendHTML("<br/><br/>");
+		overlayConsole.appendInstruction("Which operations do you want applied to your rule?");
+		overlayConsole.appendHTML("<input id='transInv' type='checkbox' value='transInv'>Translation Invariance</input><br/>");
+		overlayConsole.appendHTML("<input id='flipping' type='checkbox' value='flipping'>Flipping</input><br/>");
+		overlayConsole.appendHTML("<input id='rotation' type='checkbox' value='rotation'>Rotation</input><br/>");
+		overlayConsole.appendHTML("<input id='rowPermute' type='checkbox' value='rowPermute'>Row Permutation</input><br/>");
+		overlayConsole.appendHTML("<input id='colPermute' type='checkbox' value='colPermute'>Column Permutation</input><br/>");
+		overlayConsole.appendHTML("<br/>");
+		overlayConsole.appendButton("CONTINUE","checkNameAndDesc()");
+		overlayConsole.appendHTML("<br/>");
+		overlayConsole.appendButton("QUIT","endCreationInterface()");
 	} else {
 		alert(message);
 	}
 }
 
-checkName = function(){
+checkNameAndDesc = function(){
 	var name = $("#ruleName").val();
 	if (name == null || name == "") {
 		alert("Please write a name for your new rule!");
 	} else if (eval("game."+name+"!=null")){
 		alert("This name has already been taken - can you choose another?");
 	} else {
-		overlayConsole.clear();
-		overlayConsole.appendInstruction("Can you describe what your new rule does?");
-		overlayConsole.appendHTML("<textarea id='ruleDesc'>My rule...</textarea>");
-		overlayConsole.appendButton("CONTINUE","checkDesc(\""+name+"\")");
+		var desc = $("#ruleDesc").val();
+		if (desc == "My rule..." || desc == "")
+			desc = "No description";
+		console.log($("#transInv").attr('checked'));
+		console.log($("#flipping").attr('checked'));
+		parseRule(overlayBoard, name, desc, $("#transInv").attr('checked'), $("#flipping").attr('checked'),
+				  $("#rowPermute").attr('checked'), $("#colPermute").attr('checked'), $("#rotation").attr('checked'));
+		endCreationInterface();
 	}
-}
-
-checkDesc = function(name){
-	var desc = $("#ruleDesc").val();
-	if (desc == "My rule..." || desc == "")
-		desc = "No description";
-	parseRule(overlayBoard, name, desc);
-	endCreationInterface();
 }
 
 endCreationInterface = function(){
@@ -212,14 +221,43 @@ ruleIsValid = function(){
 	return null;
 }
 
-parseRule = function(ruleBoard, name, desc){
-	// local helper functions //
+parseRule = function(ruleBoard, name, desc, translationInvariant, flipping,
+					 rowPermutation, columnPermutation, rotation)
+{
+	/* --------------- local helper functions ---------------*/
 	var min = function(n,m){
 		return (n<m ? n : m);
 	}
 	
 	var max = function(n,m){
 		return (n>m ? n : m);
+	}
+	
+	// add the new rule board if not already in the array
+	var addRule = function(array, newRule){
+		var matchFound = false;
+		var currentBoard;
+		for (var i=0; i<array.length && !matchFound; i++){
+			currentBoard = array[i];
+			// make sure the dimensions match
+			if (newRule.length != currentBoard.length || newRule[0].length != currentBoard[0].length)
+				continue;
+			// check to see if the boards are the same
+			matchFound = true;
+			boardLoop:
+			for (var j=0; j<currentBoard.length; j++){
+				for (var k=0; k<currentBoard[0].length; k++){
+					if (currentBoard[j][k] != newRule[j][k]){
+						// break out of these loops
+						matchFound = false;
+						break boardLoop;
+					}
+				}
+			}
+		}
+		// if the board was not found in the array, add it
+		if (!matchFound)
+			array.push(newRule);
 	}
 	
 	var flip = function(board,horizontally,vertically){
@@ -240,7 +278,49 @@ parseRule = function(ruleBoard, name, desc){
 		return flippedRuleBoard;
 	}
 	
-	// start of actual function
+	var rotate = function(board){
+		var rotatedBoard = new Array();
+		for (var i=0; i<board[0].length; i++)
+			rotatedBoard.push(new Array(board.length));
+		for (var i=0; i<board.length; i++){
+			for (var j=0; j<board[0].length; j++){
+				var xIndex = j;
+				var yIndex = board.length-i-1;
+				rotatedBoard[xIndex][yIndex] = board[i][j];
+			}
+		}
+		return rotatedBoard;
+	}
+	
+	var colPermute = function(board,offset){
+		var permutedBoard = new Array();
+		for (var i=0; i<board.length; i++)
+			permutedBoard.push(new Array(board[0].length));
+		for (var i=0; i<board.length; i++){
+			for (var j=0; j<board[0].length; j++){
+				var xIndex = (i + offset) % board.length;
+				permutedBoard[xIndex][j] = board[i][j];
+			}
+		}
+		return permutedBoard;
+	}
+	
+	var rowPermute = function(board,offset){
+		var permutedBoard = new Array();
+		for (var i=0; i<board.length; i++)
+			permutedBoard.push(new Array(board[0].length));
+		for (var i=0; i<board.length; i++){
+			for (var j=0; j<board[0].length; j++){
+				var yIndex = (j + offset) % board[0].length;
+				permutedBoard[i][yIndex] = board[i][j];
+			}
+		}
+		return permutedBoard;
+	}
+	/* ------------- end local helper functions -------------*/
+	
+	// if the rule was created from the creation guide, flip the players
+	// my rule evaluation function assumes that P1 represents the current player
 	if (guideState == GUIDE_STATE.FINISHING){
 		for (var i=0; i<ruleBoard.length; i++){
 			for (var j=0; j<ruleBoard[0].length; j++){
@@ -252,131 +332,181 @@ parseRule = function(ruleBoard, name, desc){
 		}
 	}
 	
-	// convert the rule to a relative format
-	var hMin = ruleBoard.length;
-	var hMax = 0;
-	var vMin = ruleBoard.length;
-	var vMax = 0;
-	for (var i=0; i<ruleBoard.length; i++){
-		for (var j=0; j<ruleBoard[0].length; j++){
-			if (ruleBoard[i][j] != TYPE.IGNORE){
-				hMin = min(hMin,i);
-				hMax = max(hMax,i);
-				vMin = min(vMin,j);
-				vMax = max(vMax,j);
+	// if translation invariance is activated, convert the rule to a relative format
+	if (translationInvariant){
+		var hMin = ruleBoard.length;
+		var hMax = 0;
+		var vMin = ruleBoard.length;
+		var vMax = 0;
+		for (var i=0; i<ruleBoard.length; i++){
+			for (var j=0; j<ruleBoard[0].length; j++){
+				if (ruleBoard[i][j] != TYPE.IGNORE){
+					hMin = min(hMin,i);
+					hMax = max(hMax,i);
+					vMin = min(vMin,j);
+					vMax = max(vMax,j);
+				}
 			}
 		}
+		
+		var width = hMax-hMin+1;
+		var height = vMax-vMin+1;
+		
+		// essentially, we're shrinking a given rule to the smallest rectangular
+		// array that can hold it
+		var newRuleBoard = new Array();
+		for (var i=0; i<width; i++)
+			newRuleBoard.push(new Array(height));
+		for (var i=hMin; i<=hMax; i++){
+			for (var j=vMin; j<=vMax; j++){
+				newRuleBoard[i-hMin][j-vMin] = ruleBoard[i][j];
+			}
+		}
+		
+		ruleBoard = newRuleBoard;
 	}
-	var width = hMax-hMin+1;
-	var height = vMax-vMin+1;
 	
-	// essentially, we're shrinking a given rule to the smallest rectangular
-	// array that can hold it
-	var newRuleBoard = new Array();
-	for (var i=0; i<width; i++)
-		newRuleBoard.push(new Array(height));
-	for (var i=hMin; i<=hMax; i++){
-		for (var j=vMin; j<=vMax; j++){
-			newRuleBoard[i-hMin][j-vMin] = ruleBoard[i][j];
+	// generate all of the new ruleBoards
+	var newRuleBoards = new Array();
+	// always push the original rule board
+	newRuleBoards.push(ruleBoard);
+	
+	// if flipping activated
+	if (flipping){
+		for (var i=0; i<newRuleBoards.length; i++){
+			addRule(newRuleBoards, flip(newRuleBoards[i],true,false));
+			addRule(newRuleBoards, flip(newRuleBoards[i],false,true));
+			addRule(newRuleBoards, flip(newRuleBoards[i],true,true));
 		}
 	}
 	
-	// create three new boards:
-	// - flip horizontally
-	// - flip vertically
-	// - flip both
-	var newRuleBoards = new Array();
-	newRuleBoards.push(newRuleBoard);
-	newRuleBoards.push(flip(newRuleBoard,true,false))
-	newRuleBoards.push(flip(newRuleBoard,false,true))
-	newRuleBoards.push(flip(newRuleBoard,true,true))
+	// if row permutation activated
+	if (rowPermutation){
+		for (var i=0; i<newRuleBoards.length; i++)
+			for (var j=0; j<newRuleBoards[i][0].length; j++)
+				addRule(newRuleBoards, rowPermute(newRuleBoards[i],j))
+	}
+	
+	// if column permutation activated
+	if (columnPermutation){
+		for (var i=0; i<newRuleBoards.length; i++)
+			for (var j=0; j<newRuleBoards[i].length; j++)
+				addRule(newRuleBoards, colPermute(newRuleBoards[i],j))
+	}
+	
+	// if rotation activated
+	if (rotation){
+		for (var i=0; i<newRuleBoards.length; i++){
+			var rotatedBoard = rotate(newRuleBoards[i]);
+			addRule(newRuleBoards, rotatedBoard);
+			addRule(newRuleBoards, flip(rotatedBoard,true,true));
+		}
+	}
 	
 	// this is the check function - it goes through all ruleboards just created
 	//   and compares them to the actual board
-	newRelativeRule = function(board, player){
-		var result = new Object();
-		var pushFlag = false;
-		result['success']=true;
-		result['loc'] = [];
-		for (var h=0; h<newRuleBoards.length; h++){
-			for (var i=0; i<=(board.length-width); i++){
-				for (var j=0; j<=(board[0].length-height); j++){
-					for (var k=i; k<(width+i); k++){
-						for (var l=j; l<(height+j); l++){
-							console.log(newRuleBoards[h]);
-							switch(newRuleBoards[h][k-i][l-j]){
-								case (TYPE.P1):
-									if (board[k][l] != player)
-										result['success'] = false;
-									break;
-								case (TYPE.P2):
-									if (board[k][l] != game.flip(player))
-										result['success'] = false;
-									break;
-								case (TYPE.EMPTY):
-									if (board[k][l] != null)
-										result['success'] = false;
-									break;
-								case (TYPE.SELECTED):
-									if (board[k][l] == null){
-										result['loc'].push([k,l]);
-										pushFlag = true;
-									}
-									break;
-								default:
-									alert("something went wrong");
+	var newRule;
+	
+	if (translationInvariant){
+		// relative version of the function (translation invariance)
+		newRule = function(board, player){
+			var result = new Object();
+			var pushFlag = false;
+			var width, height;
+			result['success']=true;
+			result['loc'] = [];
+			for (var h=0; h<newRuleBoards.length; h++){
+				width = newRuleBoards[h].length;
+				height = newRuleBoards[h][0].length;
+				for (var i=0; i<=(board.length-width); i++){
+					for (var j=0; j<=(board[0].length-height); j++){
+						for (var k=i; k<(width+i); k++){
+							for (var l=j; l<(height+j); l++){
+								switch(newRuleBoards[h][k-i][l-j]){
+									case (TYPE.P1):
+										if (board[k][l] != player)
+											result['success'] = false;
+										break;
+									case (TYPE.P2):
+										if (board[k][l] != game.flip(player))
+											result['success'] = false;
+										break;
+									case (TYPE.EMPTY):
+										if (board[k][l] != null)
+											result['success'] = false;
+										break;
+									case (TYPE.SELECTED):
+										if (board[k][l] == null){
+											result['loc'].push([k,l]);
+											pushFlag = true;
+										}
+										break;
+									default:
+										alert("something went wrong");
+								}
 							}
 						}
+						if (!result['success']){
+							if (pushFlag)
+								result['loc'].pop();
+						}
+						pushFlag = false;
+						result['success'] = true;
 					}
-					if (!result['success']){
-						if (pushFlag)
-							result['loc'].pop();
-					}
-					pushFlag = false;
-					result['success'] = true;
 				}
+				console.log(result['loc']+"")
 			}
-			console.log(result['loc']+"")
+			if (result['loc'].length == 0)
+				result['success'] = false;
+			return result;
 		}
-		if (result['loc'].length == 0)
-			result['success'] = false;
-		return result;
+	} else {
+		// normal version (no translation invariance)
+		newRule = function(board,player){
+			var result = new Object();
+			var pushFlag = false;
+			result['success']=true;
+			result['loc'] = [];
+			for (var h=0; h<newRuleBoards.length; h++){
+				console.log(newRuleBoards[h]);
+				for (var i=0; i<board.length; i++){
+					for (var j=0; j<board[0].length; j++){
+						switch(newRuleBoards[h][i][j]){
+							case (TYPE.P1):
+								// this assumes p1 is the current player in the rule
+								// could implement it so that it's player-blind
+								if (board[i][j] != player)
+									result['success'] = false;
+								break;
+							case (TYPE.P2):
+								if (board[i][j] != game.flip(player))
+									result['success'] = false;
+								break;
+							case (TYPE.EMPTY):
+								if (board[i][j] != null)
+									result['success'] = false;
+								break;
+							case (TYPE.SELECTED):
+								if (board[i][j] == null){
+									result['loc'].push([i,j])
+									pushFlag = true;
+								}
+								break;
+						}
+					}
+				}
+				if (!result['success']){
+					if (pushFlag)
+						result['loc'].pop();
+				}
+				pushFlag = false;
+				result['success'] = true;
+			}
+			if (result['loc'].length == 0)
+				result['success'] = false;
+			return result;
+		}
 	}
-	
-	/*newRule = function(board,player){
-		// not going to worry about position,rotation,symmetric invariance for now
-		// I am going to make this player-ignorant, though, i.e. switch all the
-		//   human player pictures with AI pictures
-		// once this comes into play, having a return array of possible placements will be handy
-		var result = new Object();
-		result['success']=true;
-		result['loc'] = [];
-		for (var i=0; i<board.length; i++){
-			for (var j=0; j<board[0].length; j++){
-				switch(ruleBoard[i][j]){
-					case (TYPE.P1):
-						// this assumes p1 is the current player in the rule
-						// could implement it so that it's player-blind
-						if (board[i][j] != player)
-							result['success'] = false;
-						break;
-					case (TYPE.P2):
-						if (board[i][j] != game.flip(player))
-							result['success'] = false;
-						break;
-					case (TYPE.EMPTY):
-						if (board[i][j] != null)
-							result['success'] = false;
-						break;
-					case (TYPE.SELECTED):
-						if (board[i][j] == null)
-							result['loc'].push([i,j])
-						break;
-				}
-			}
-		}
-		return result;
-	}*/
 	
 	// name,code,tooltip,enabled:
 	//   name should be set by the user
@@ -386,7 +516,7 @@ parseRule = function(ruleBoard, name, desc){
 	//                                                       or learn through context when it next pops up
 	
 	game.strategySet.push({'name':name,'code':name,'tooltip':desc,'enabled':true});
-	eval("game."+name+" = newRelativeRule");
+	eval("game."+name+" = newRule");
 	console.log('new strategy '+name+' pushed');	
 	
 	// a generic addRule() function would definitely be preferred to this method
