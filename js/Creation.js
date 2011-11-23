@@ -122,7 +122,7 @@ startCreationInterface = function(board) {
 		$("#description_"+type).css("width",width);
 	}
 	
-	// add a continue and quit button to the console
+	// add continue and quit button to the console
 	overlayConsole.appendButton("CONTINUE","checkRule()");
 	overlayConsole.appendHTML("<br/>")
 	overlayConsole.appendButton("QUIT","endCreationInterface()");
